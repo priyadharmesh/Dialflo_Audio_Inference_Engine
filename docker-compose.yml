@@ -1,0 +1,46 @@
+# =============================================================================
+# Dialflo Voice Demographic Service - Docker Compose Configuration
+# =============================================================================
+#
+# Start the service:     docker compose up
+# Start in background:   docker compose up -d
+# View logs:             docker compose logs -f
+# Stop:                  docker compose down
+#
+# =============================================================================
+
+services:
+  dialflo-backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: dialflo-voice-service
+    ports:
+      - "8000:8000"
+    environment:
+      - PYTHONUNBUFFERED=1
+      - LOG_LEVEL=INFO
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    restart: unless-stopped
+    # Resource limits (adjust based on your infrastructure)
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 1G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+    # Security options
+    security_opt:
+      - no-new-privileges:true
+    # Read-only root filesystem (PII compliance - no writes possible)
+    read_only: true
+    # Temporary filesystem for Python cache (not persistent)
+    tmpfs:
+      - /tmp:size=100M,mode=1777
